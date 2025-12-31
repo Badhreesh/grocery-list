@@ -18,17 +18,31 @@ function GroceryItem({ item, onDeleteItem }) {
   );
 }
 
-function GroceryList({ items, onDeleteItem }) {
-  return (
-    <ul>
-      {items.map((item) => (
-        <GroceryItem item={item} onDeleteItem={onDeleteItem} key={item.id} />
-      ))}
-    </ul>
-  );
+function GroceryList({ items, filteredItem, onDeleteItem }) {
+  const itemRows = [];
+  items.forEach((item) => {
+    if (item.name.toLowerCase().indexOf(filteredItem.toLowerCase()) === -1)
+      return;
+    itemRows.push(
+      <GroceryItem item={item} onDeleteItem={onDeleteItem} key={item.id} />
+    );
+  });
+  return <ul>{itemRows}</ul>;
 }
 
-function ItemForm({ onAddItem }) {
+function FilterItemForm({ filteredItem, onFilterItemChange }) {
+  return (
+    <form>
+      <input
+        type="text"
+        value={filteredItem}
+        onChange={(e) => onFilterItemChange(e.target.value)}
+        placeholder="Filter item..."
+      />
+    </form>
+  );
+}
+function AddItemForm({ onAddItem }) {
   const [item, setItem] = useState("");
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -51,6 +65,7 @@ function ItemForm({ onAddItem }) {
 }
 
 function GroceryListApp() {
+  const [filterItem, setFilterItem] = useState("");
   const [allItems, setAllItems] = useState(initialItems);
   const addItem = (newItem) =>
     setAllItems([
@@ -62,8 +77,16 @@ function GroceryListApp() {
   return (
     <>
       <h1>Grocery List</h1>
-      <ItemForm onAddItem={addItem} />
-      <GroceryList items={allItems} onDeleteItem={deleteItem} />
+      <AddItemForm onAddItem={addItem} />
+      <FilterItemForm
+        filteredItem={filterItem}
+        onFilterItemChange={setFilterItem}
+      />
+      <GroceryList
+        items={allItems}
+        filteredItem={filterItem}
+        onDeleteItem={deleteItem}
+      />
     </>
   );
 }
