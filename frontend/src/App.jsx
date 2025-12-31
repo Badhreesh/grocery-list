@@ -3,23 +3,33 @@ import { useState } from "react";
 import AddItemForm from "./components/AddItemForm";
 import FilterItemForm from "./components/FilterItemForm";
 import GroceryList from "./components/GroceryList";
+import { getItems, saveItems } from "./services/localStorage";
 
-const initialItems = [
-  { id: 1, name: "Milk", done: false },
-  { id: 2, name: "Cheese", done: false },
-  { id: 3, name: "Mushroom", done: false },
-];
+const initialItems = getItems();
 
 function GroceryListApp() {
   const [filterItem, setFilterItem] = useState("");
   const [allItems, setAllItems] = useState(initialItems);
-  const addItem = (newItem) =>
-    setAllItems([
+
+  const addItem = (newItem) => {
+    const newAllItems = [
       ...allItems,
       { id: crypto.randomUUID(), name: newItem, done: false },
-    ]);
+    ];
+    setAllItems(newAllItems);
+    saveItems(newAllItems);
+  };
+
   const deleteItem = (id) =>
     setAllItems(allItems.filter((item) => item.id !== id));
+
+  const toggleItem = (id) => {
+    const updatedAllItems = allItems.map((item) =>
+      item.id === id ? { ...item, done: !item.done } : item
+    );
+    setAllItems(updatedAllItems);
+    saveItems(updatedAllItems);
+  };
   return (
     <>
       <h1>Grocery List</h1>
@@ -32,6 +42,7 @@ function GroceryListApp() {
         items={allItems}
         filteredItem={filterItem}
         onDeleteItem={deleteItem}
+        onToggleItem={toggleItem}
       />
     </>
   );
