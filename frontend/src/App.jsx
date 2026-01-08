@@ -20,8 +20,11 @@ function GroceryListApp() {
     saveItems(newAllItems);
   };
 
-  const deleteItem = (id) =>
-    setAllItems(allItems.filter((item) => item.id !== id));
+  const deleteItem = (id) => {
+    const remainingAllItems = allItems.filter((item) => item.id !== id);
+    setAllItems(remainingAllItems);
+    saveItems(remainingAllItems);
+  };
 
   const toggleItem = (id) => {
     const updatedAllItems = allItems.map((item) =>
@@ -30,6 +33,7 @@ function GroceryListApp() {
     setAllItems(updatedAllItems);
     saveItems(updatedAllItems);
   };
+
   return (
     <>
       <h1>Grocery List</h1>
