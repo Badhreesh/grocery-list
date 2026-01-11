@@ -7,6 +7,7 @@ function initDb() {
         `CREATE TABLE IF NOT EXISTS items (
                 id INTEGER PRIMARY KEY,
                 item TEXT NOT NULL,
+                done INTEGER DEFAULT 0,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )`,
         (err) => {

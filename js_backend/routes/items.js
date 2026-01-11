@@ -25,7 +25,7 @@ router.delete("/:id", (req, res) => {
   let sql = `DELETE FROM items WHERE id =?`;
   db.run(sql, [id], (err) => {
     if (err) return console.error(err.message);
-    return res.json({ message: `${item} has been deleted from the list.` });
+    return res.json({ message: `${req.body} has been deleted from the list.` });
   });
 });
 
