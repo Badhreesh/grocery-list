@@ -1,43 +1,50 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import AddItemForm from "./components/AddItemForm";
 import FilterItemForm from "./components/FilterItemForm";
 import GroceryList from "./components/GroceryList";
-import { getItems, saveItems } from "./services/localStorage";
-
-const initialItems = getItems();
+import {
+  addItem,
+  deleteItem,
+  getItems,
+  updateItem,
+} from "./services/localStorage";
 
 function GroceryListApp() {
   const [filterItem, setFilterItem] = useState("");
-  const [allItems, setAllItems] = useState(initialItems);
+  const [allItems, setAllItems] = useState([]);
 
-  const addItem = (newItem) => {
-    const newAllItems = [
-      ...allItems,
-      { id: crypto.randomUUID(), name: newItem, done: false },
-    ];
-    setAllItems(newAllItems);
-    saveItems(newAllItems);
+  useEffect(() => {
+    async function getInitialItems() {
+      const items = await getItems();
+      setAllItems(items);
+    }
+    getInitialItems();
+  }, []);
+
+  const handleAddItem = async (newItem) => {
+    const addedItem = await addItem(newItem);
+    if (addedItem) {
+      setAllItems((prev) => [...prev, addedItem]);
+    }
   };
 
-  const deleteItem = (id) => {
+  const handleDeleteItem = async (id) => {
+    await deleteItem(id);
     const remainingAllItems = allItems.filter((item) => item.id !== id);
     setAllItems(remainingAllItems);
-    saveItems(remainingAllItems);
   };
 
-  const toggleItem = (id) => {
-    const updatedAllItems = allItems.map((item) =>
-      item.id === id ? { ...item, done: !item.done } : item
-    );
-    setAllItems(updatedAllItems);
-    saveItems(updatedAllItems);
+  const handleToggleItem = async (id) => {
+    await updateItem(id);
+    const items = await getItems();
+    setAllItems(items);
   };
 
   return (
     <>
       <h1>Grocery List</h1>
-      <AddItemForm onAddItem={addItem} />
+      <AddItemForm onAddItem={handleAddItem} />
       <FilterItemForm
         filteredItem={filterItem}
         onFilterItemChange={setFilterItem}
@@ -45,8 +52,8 @@ function GroceryListApp() {
       <GroceryList
         items={allItems}
         filteredItem={filterItem}
-        onDeleteItem={deleteItem}
-        onToggleItem={toggleItem}
+        onDeleteItem={handleDeleteItem}
+        onToggleItem={handleToggleItem}
       />
     </>
   );

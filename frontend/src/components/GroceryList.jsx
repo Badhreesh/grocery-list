@@ -14,7 +14,6 @@ function GroceryList({ items, filteredItem, onDeleteItem, onToggleItem }) {
       />
     );
   });
-  console.log(items);
 
   return <ul>{itemRows}</ul>;
 }
