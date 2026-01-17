@@ -17,6 +17,7 @@ function GroceryListApp() {
     getInitialItems();
   }, []);
 
+  // Call API and then update local state
   const handleAddItem = async (newItem) => {
     const addedItem = await addItem(newItem);
     setAllItems((prev) => [...prev, addedItem]);
