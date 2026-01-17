@@ -24,21 +24,21 @@ function GroceryListApp() {
 
   const handleAddItem = async (newItem) => {
     const addedItem = await addItem(newItem);
-    if (addedItem) {
-      setAllItems((prev) => [...prev, addedItem]);
-    }
+    setAllItems((prev) => [...prev, addedItem]);
   };
 
   const handleDeleteItem = async (id) => {
     await deleteItem(id);
-    const remainingAllItems = allItems.filter((item) => item.id !== id);
-    setAllItems(remainingAllItems);
+    setAllItems((prevItems) => prevItems.filter((item) => item.id !== id));
   };
 
   const handleToggleItem = async (id) => {
     await updateItem(id);
-    const items = await getItems();
-    setAllItems(items);
+    setAllItems((prevItems) =>
+      prevItems.map((item) =>
+        item.id === id ? { ...item, done: !item.done } : item
+      )
+    );
   };
 
   return (
