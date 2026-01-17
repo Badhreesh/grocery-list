@@ -4,3 +4,5 @@ POST:
 curl -H 'Content-Type: application/json' -d '{"name":"milk"}' -X POST http://localhost:5000/items
 DELETE:
 curl -X DELETE http://localhost:5000/items/1
+
+Start the backend server: python -m backend.app
