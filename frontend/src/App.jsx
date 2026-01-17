@@ -3,12 +3,7 @@ import { useEffect, useState } from "react";
 import AddItemForm from "./components/AddItemForm";
 import FilterItemForm from "./components/FilterItemForm";
 import GroceryList from "./components/GroceryList";
-import {
-  addItem,
-  deleteItem,
-  getItems,
-  updateItem,
-} from "./services/localStorage";
+import { addItem, deleteItem, getItems, updateItem } from "./services/api";
 
 function GroceryListApp() {
   const [filterItem, setFilterItem] = useState("");
