@@ -17,6 +17,7 @@ def welcome():
 def get_items():
     q = sa.select(Item)
     items = db.session.scalars(q).all()
+    items = [{"id": item.id, "name": item.name, "done": item.done} for item in items]
     return jsonify(items)
 
 
