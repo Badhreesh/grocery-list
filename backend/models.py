@@ -31,6 +31,7 @@ class Item(db.Model):
     done: so.Mapped[bool] = so.mapped_column(sa.Boolean, nullable=False, default=False)
 
     # Foreign keys
+    # When creating an Item, assign a user object to the added_by field so that you don't have to specify a user_id
     user_id: so.Mapped[int] = so.mapped_column(sa.ForeignKey(User.id), index=True)
 
     # Relationships

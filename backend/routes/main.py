@@ -1,6 +1,9 @@
+import sqlalchemy as sa
 from flask import Blueprint, jsonify, request
+from sqlalchemy.exc import IntegrityError
 
-from backend.database.utils import get_db_connection
+from backend import db
+from backend.models import Item, User
 
 bp = Blueprint("main", __name__)
 
@@ -12,9 +15,8 @@ def welcome():
 
 @bp.route("/items")
 def get_items():
-    conn = get_db_connection()
-    items = conn.execute("SELECT * FROM items").fetchall()
-    items = [dict(item) for item in items]
+    q = sa.select(Item)
+    items = db.session.scalars(q).all()
     return jsonify(items)
 
 
@@ -26,39 +28,33 @@ def add_item():
         return jsonify({"error": "Please provide a name for your item!"}), 400
     else:
         item_name = item_name.capitalize()
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("INSERT into items (name) VALUES (?)", [item_name])
-    conn.commit()
-
-    item_id = cursor.lastrowid
-    item = cursor.execute("SELECT * FROM items where id = ?", [item_id]).fetchone()
-    return jsonify(dict(item)), 201
+    # todo: The user should be passed in from the frontend
+    u = db.session.get(User, 1)  # Get my name as the default user for now
+    i = Item(name=item_name, added_by=u)
+    try:
+        db.session.add(i)
+        db.session.commit()
+        return jsonify({"message": f"Added {item_name} to list"}), 201
+    except IntegrityError:
+        return jsonify(
+            {"message": f"{item_name} already exists in list."}
+        ), 409  # conflict status code
 
 
 @bp.route("/items/<item_id>", methods=["DELETE"])
 def delete_item(item_id: str):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    item = cursor.execute("SELECT name from items where id = ?", [item_id]).fetchone()
-    cursor.execute("DELETE from items where id = ?", [item_id])
-    conn.commit()
-    return jsonify(f"{item['name']} has been removed from the list"), 200
+    i = db.session.get(Item, int(item_id))
+    name = i.name
+    db.session.delete(i)
+    db.session.commit()
+    return jsonify({"message": f"{name} has been removed from list"}), 200
 
 
 @bp.route("/items/<item_id>", methods=["PUT"])
 def update_item(item_id: str):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    item = cursor.execute("SELECT done from items where id = ?", [item_id]).fetchone()
-    if item["done"] == 0:
-        cursor.execute("UPDATE items SET done = ? WHERE id = ?", [1, item_id])
-    else:
-        cursor.execute("UPDATE items SET done = ? WHERE id = ?", [0, item_id])
-    conn.commit()
-    updated_item = cursor.execute(
-        "SELECT * FROM items where id = ?", [item_id]
-    ).fetchone()
-    updated_item = dict(updated_item)
-    updated_item = updated_item | {"done": bool(updated_item["done"])}
-    return jsonify(updated_item), 200
+    i = db.session.get(Item, int(item_id))
+    name = i.name
+    i.done = not i.done
+    db.session.add(i)
+    db.session.commit()
+    return jsonify({"message": f"set done={i.done} for {name}"}), 200
