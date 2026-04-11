@@ -1,5 +1,5 @@
 import sqlalchemy as sa
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
 from backend import db
@@ -9,20 +9,20 @@ bp = Blueprint("main", __name__)
 
 
 @bp.route("/")
-def welcome():
-    return jsonify({"message": "Hello from the grocery list API"})
+def welcome() -> tuple[Response, int]:
+    return jsonify({"message": "Hello from the grocery list API"}), 200
 
 
 @bp.route("/items")
-def get_items():
+def get_items() -> tuple[Response, int]:
     q = sa.select(Item)
     items = db.session.scalars(q).all()
     items = [{"id": item.id, "name": item.name, "done": item.done} for item in items]
-    return jsonify(items)
+    return jsonify(items), 200
 
 
 @bp.route("/items", methods=["POST"])
-def add_item():
+def add_item() -> tuple[Response, int]:
     data = request.get_json()
     item_name = data.get("name")
     if item_name is None:
@@ -35,27 +35,53 @@ def add_item():
     try:
         db.session.add(i)
         db.session.commit()
-        return jsonify({"message": f"Added {item_name} to list"}), 201
+        q = sa.select(Item).order_by(Item.id.desc())
+        added_item = db.session.execute(q).scalar()
+        assert isinstance(added_item, Item), (
+            "The newly added item must be available in DB."
+        )
+        return jsonify(
+            {
+                "id": added_item.id,
+                "name": added_item.name,
+                "done": added_item.done,
+                "message": f"Added {item_name} to list",
+            }
+        ), 201
     except IntegrityError:
         return jsonify(
-            {"message": f"{item_name} already exists in list."}
+            {
+                "error": "Item name unique constraint not met",
+                "details": f"{item_name} already exists in DB",
+            }
         ), 409  # conflict status code
 
 
 @bp.route("/items/<item_id>", methods=["DELETE"])
-def delete_item(item_id: str):
+def delete_item(item_id: str) -> tuple[Response, int]:
     i = db.session.get(Item, int(item_id))
+    if i is None:
+        return jsonify({"message": f"Item with id={item_id} doesn't exist in DB"}), 404
     name = i.name
     db.session.delete(i)
     db.session.commit()
-    return jsonify({"message": f"{name} has been removed from list"}), 200
+    return jsonify({"message": f"Item {name!r} deleted successfully"}), 200
 
 
 @bp.route("/items/<item_id>", methods=["PUT"])
-def update_item(item_id: str):
+def update_item(item_id: str) -> tuple[Response, int]:
     i = db.session.get(Item, int(item_id))
+    if i is None:
+        return jsonify({"message": f"Item with id={item_id} doesn't exist in DB"}), 404
     name = i.name
     i.done = not i.done
     db.session.add(i)
     db.session.commit()
-    return jsonify({"message": f"set done={i.done} for {name}"}), 200
+    return jsonify(
+        {
+            "id": i.id,
+            "name": i.name,
+            "done": i.done,
+            "message": f"Set done={i.done} for {name}",
+        }
+    ), 200
